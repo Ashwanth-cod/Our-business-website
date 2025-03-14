@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI & Google Pay Payment</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script async src="https://pay.google.com/gp/p/js/pay.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #qrcode {
+            margin-top: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        #gpay-button-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>UPI & Google Pay Payment</h2>
+
+    <!-- UPI Payment Section -->
+    <label for="amount">Enter Amount (INR):</label>
+    <input type="number" id="amount" placeholder="Enter amount" min="1" required>
+    <button onclick="generateQR()">Generate UPI QR Code</button>
+    <div id="qrcode"></div>
+
+    <!-- Google Pay Button -->
+    <div id="gpay-button-container"></div>
+
+    <script>
+        function generateQR() {
+            var amount = document.getElementById("amount").value;
+            if (!amount || amount <= 0) {
+                alert("Please enter a valid amount.");
+                return;
+            }
+
+            var upiID = "savi.krishnaswamy@okicici"; // Replace with your actual UPI ID
+            var name = "Savitha"; // Replace with your name or business name
+            var upiURL = `upi://pay?pa=${upiID}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR`;
+
+            // Clear previous QR code
+            document.getElementById("qrcode").innerHTML = "";
+
+            // Generate new QR code
+            new QRCode(document.getElementById("qrcode"), {
+                text: upiURL,
+                width: 250,
+                height: 250
+            });
+        }
+
+        function onGooglePayLoaded() {
+            const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'TEST' });
+
+            const button = paymentsClient.createButton({ onClick: onGooglePayClick });
+            document.getElementById('gpay-button-container').appendChild(button);
+        }
+
+        function onGooglePayClick() {
+            const amount = document.getElementById("amount").value || "1.00";
+
+            const paymentDataRequest = {
+                apiVersion: 2,
+                apiVersionMinor: 0,
+                allowedPaymentMethods: [
+                    {
+                        type: "CARD",
+                        parameters: {
+                            allowedAuthMethods: ["PAN_ONLY", "CRYPTOGRAM_3DS"],
+                            allowedCardNetworks: ["VISA", "MASTERCARD"]
+                        },
+                        tokenizationSpecification: {
+                            type: "PAYMENT_GATEWAY",
+                            parameters: {
+                                gateway: "example",
+                                gatewayMerchantId: "your_merchant_id" // Replace with your actual merchant ID
+                            }
+                        }
+                    },
+                    {
+                        type: "UPI",
+                        parameters: {}
+                    }
+                ],
+                merchantInfo: {
+                    merchantId: "your_merchant_id",
+                    merchantName: "Your Business Name"
+                },
+                transactionInfo: {
+                    totalPriceStatus: "FINAL",
+                    totalPrice: amount,
+                    currencyCode: "INR"
+                }
+            };
+
+            const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'TEST' });
+
+            paymentsClient.loadPaymentData(paymentDataRequest)
+                .then(paymentData => {
+                    console.log("Payment Successful:", paymentData);
+                    alert("Payment Successful!");
+
+                    // Send Email Notification
+                    sendEmailNotification(amount);
+                })
+                .catch(err => {
+                    console.error("Payment Failed:", err);
+                    alert("Payment Failed!");
+                });
+        }
+
+        function sendEmailNotification(amount) {
+    fetch('https://yourdomain.com/send_email.php', {  // Replace with your PHP backend URL
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ amount: amount })
+    }).then(response => response.json())
+      .then(data => console.log("Email Sent:", data))
+      .catch(error => console.error("Email Error:", error));
+}
+
+
+        window.onload = onGooglePayLoaded;
+    </script>
+
+</body>
+</html>
