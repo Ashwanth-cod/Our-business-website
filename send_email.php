@@ -1,19 +1,20 @@
 <?php
-// Allow cross-origin requests (CORS) if needed
+// Allow CORS if needed
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 
-// Get the raw POST data
+// Read the raw POST data
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Extract the amount from the request
-$amount = isset($data["amount"]) ? $data["amount"] : "Unknown";
+// Extract product details
+$product = isset($data["product"]) ? $data["product"] : "Unknown Product";
+$price = isset($data["price"]) ? $data["price"] : "0";
 
-// Email configuration
-$to = "your_email@example.com";  // Change to your email
-$subject = "Payment Received";
-$message = "A payment of ₹" . $amount . " has been received.";
+// Email Configuration
+$to = "ashwanth.asr@gmail.com"; // Change to your email
+$subject = "Payment Received for $product";
+$message = "A payment of ₹" . $price . " has been received for the product: " . $product;
 $headers = "From: no-reply@yourdomain.com" . "\r\n" .
            "Reply-To: no-reply@yourdomain.com" . "\r\n" .
            "Content-Type: text/plain; charset=UTF-8";
